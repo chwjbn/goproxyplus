@@ -62,18 +62,32 @@ var (
 	defaultRootKey *ecdsa.PrivateKey
 )
 
-func init() {
+func SetDefaultCert(rootCAPem string, rootKeyPem string) {
+
+	defaultRootCAPem = []byte(rootCAPem)
+	defaultRootKeyPem = []byte(rootKeyPem)
+
+}
+
+func InitCert() error {
+
 	var err error
+
 	block, _ := pem.Decode(defaultRootCAPem)
 	defaultRootCA, err = x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		panic(fmt.Errorf("加载根证书失败: %s", err))
+		err = fmt.Errorf("加载根证书失败: %s", err)
+		return err
 	}
+
 	block, _ = pem.Decode(defaultRootKeyPem)
 	defaultRootKey, err = x509.ParseECPrivateKey(block.Bytes)
 	if err != nil {
-		panic(fmt.Errorf("加载根证书私钥失败: %s", err))
+		err = fmt.Errorf("加载根证书私钥失败: %s", err)
+		return err
 	}
+
+	return err
 }
 
 // Certificate 证书管理
@@ -202,11 +216,11 @@ func (c *Certificate) GenerateCA() (*Pair, error) {
 	tmpl := &x509.Certificate{
 		SerialNumber: big.NewInt(rand.Int63()),
 		Subject: pkix.Name{
-			CommonName:   "Mars",
+			CommonName:   "XRobot",
 			Country:      []string{"China"},
-			Organization: []string{"Goproxy"},
-			Province:     []string{"FuJian"},
-			Locality:     []string{"Xiamen"},
+			Organization: []string{"XRobot"},
+			Province:     []string{"Beijing"},
+			Locality:     []string{"Beijing"},
 		},
 		NotBefore:             time.Now().AddDate(0, -1, 0),
 		NotAfter:              time.Now().AddDate(20, 0, 0),
@@ -215,7 +229,7 @@ func (c *Certificate) GenerateCA() (*Pair, error) {
 		MaxPathLen:            2,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
-		EmailAddresses:        []string{"qingqianludao@gmail.com"},
+		EmailAddresses:        []string{"robot@qq.cn"},
 	}
 
 	derBytes, err := x509.CreateCertificate(crand.Reader, tmpl, tmpl, &priv.PublicKey, priv)
@@ -257,16 +271,16 @@ func (c *Certificate) template(host string, expireYears int) *x509.Certificate {
 		Subject: pkix.Name{
 			CommonName:   host,
 			Country:      []string{"China"},
-			Organization: []string{"Goproxy"},
-			Province:     []string{"FuJian"},
-			Locality:     []string{"Xiamen"},
+			Organization: []string{"XRobot"},
+			Province:     []string{"Beijing"},
+			Locality:     []string{"Beijing"},
 		},
 		NotBefore:             time.Now().AddDate(-1, 0, 0),
 		NotAfter:              time.Now().AddDate(expireYears, 0, 0),
 		BasicConstraintsValid: true,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageDataEncipherment | x509.KeyUsageKeyEncipherment,
-		EmailAddresses:        []string{"qingqianludao@gmail.com"},
+		EmailAddresses:        []string{"robot@qq.cn"},
 	}
 	hosts := strings.Split(host, ",")
 	for _, item := range hosts {
